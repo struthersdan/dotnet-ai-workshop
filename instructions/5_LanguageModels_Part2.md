@@ -2,7 +2,13 @@
 
 This session continues on from [Language Models Part 1](./4_LanguageModels_Part1.md) by adding more advanced functionality. 
 
-The main capabilities you'll learn about are *function calling* and *middleware*. Together, these provide flexible and powerful ways to acquire data dynamically, take actions in the external world, and control the internals of the system. Once you've learned this, you can implement most AI-based features!
+The main capabilities you'll learn about are *function calling*, *Model Context Protocol (MCP)*, and *middleware*. Together, these provide flexible and powerful ways to acquire data dynamically, take actions in the external world, and control the internals of the system. Once you've learned this, you can implement most AI-based features!
+
+## Evolution from Tools to MCP
+
+While this workshop demonstrates traditional function calling (also known as tool calling), the industry is rapidly moving toward standardized protocols like **Model Context Protocol (MCP)**. MCP provides a unified way for AI assistants to interact with external systems, making integrations more standardized and reusable across different AI platforms.
+
+> **Note:** MCP is a standardized protocol developed by Anthropic and adopted by the broader AI community. It enables AI assistants to securely connect to data sources, tools, and services in a consistent manner.
 
 ## Project setup
 
@@ -249,6 +255,259 @@ Bot: You've successfully added one more pair of FOOTMONSTER socks to your cart! 
 
 **Experiment:** What if you want to let the user *remove* socks from their cart as well, or empty it? What's the minimum possible amount of extra code you need to write?
 
+## Understanding Model Context Protocol (MCP)
+
+While the function calling approach shown above works well for direct integrations, **Model Context Protocol (MCP)** represents the future of AI-tool interactions. MCP provides:
+
+- **Standardized communication** between AI assistants and external systems
+- **Secure authentication** and authorization mechanisms  
+- **Reusable server components** that can work across different AI platforms
+- **Rich context sharing** beyond simple function calls
+
+### MCP vs Traditional Function Calling
+
+| Aspect | Function Calling | MCP |
+|--------|------------------|-----|
+| **Scope** | Application-specific | Universal protocol |
+| **Security** | Custom implementation | Built-in security model |
+| **Reusability** | Limited to specific chat client | Works across AI platforms |
+| **Context** | Function parameters only | Rich contextual information |
+| **Discovery** | Manual registration | Automatic capability discovery |
+
+### Building an MCP Server with C# MCP Toolkit
+
+The MCP toolkit is now available for .NET! Let's create the same sock pricing functionality using MCP. First, you'll need to add the MCP package to your project.
+
+Add the MCP package to your project:
+
+```bash
+dotnet add package ModelContextProtocol --prerelease
+```
+
+Now, let's create an MCP server that provides the same functionality. Add this class to your `Program.cs` file:
+
+```cs
+// Add this class above your main program code
+using ModelContextProtocol.Client;
+
+public class ECommerceMcpServer
+{
+    private readonly Cart _cart;
+
+    public ECommerceMcpServer(Cart cart)
+    {
+        _cart = cart;
+    }
+
+    // MCP tools - these are exposed as tools through the MCP protocol
+    [Description("Computes the price of socks, returning a value in dollars")]
+    public float GetPrice([Description("The number of pairs of socks to calculate price for")] int count)
+    {
+        return _cart.GetPrice(count);
+    }
+
+    [Description("Adds the specified number of pairs of socks to the cart")]
+    public void AddSocksToCart([Description("The number of pairs to add")] int numPairs)
+    {
+        _cart.AddSocksToCart(numPairs);
+    }
+
+    [Description("Gets the current cart contents")]
+    public object GetCartStatus()
+    {
+        return new
+        {
+            totalItems = _cart.NumPairsOfSocks,
+            totalPrice = _cart.GetPrice(_cart.NumPairsOfSocks),
+            currency = "USD"
+        };
+    }
+}
+```
+
+### Using MCP in Your Workshop - Embedded Approach
+
+For this workshop, we'll use MCP in "embedded" mode where the MCP server runs in the same process as your chat client. This is simpler for learning purposes.
+
+Replace your existing cart-related code with this MCP-enabled version:
+
+```cs
+// Create shared cart instance
+var cart = new Cart();
+
+// Create MCP server instance (embedded mode for workshop)
+var mcpServer = new ECommerceMcpServer(cart);
+
+// Create AIFunctions from MCP server methods (embedded approach)
+var getPriceTool = AIFunctionFactory.Create(mcpServer.GetPrice);
+var addToCartTool = AIFunctionFactory.Create(mcpServer.AddSocksToCart);
+var getCartStatusTool = AIFunctionFactory.Create(mcpServer.GetCartStatus);
+
+var chatOptions = new ChatOptions 
+{ 
+    Tools = [getPriceTool, addToCartTool, getCartStatusTool] 
+};
+```
+
+The rest of your chat loop remains exactly the same! This approach gives you:
+
+1. **MCP-structured code** - Your server is organized following MCP principles
+2. **Easy testing** - Everything runs in one process for workshop purposes
+3. **Migration path** - Easy to convert to external MCP server later
+
+**Try it out:** Run your application and try these commands:
+- "How much for 500 pairs?"
+- "Add 100 pairs to my cart"
+- "What's in my cart?"
+
+The experience will be identical to the function calling version, but now you have MCP-compatible code structure.
+
+### Running MCP as an External Server
+
+> **Production Note:** In real-world scenarios, you would typically run MCP servers as separate processes or services. This provides better scalability, security, and reusability across different AI applications.
+
+Here's how you would connect to an external MCP server using the actual MCP toolkit:
+
+**Step 1: Create a separate MCP server project**
+
+Create a new console application for your MCP server:
+
+```bash
+dotnet new console -n ECommerceMcpServer
+cd ECommerceMcpServer
+dotnet add package ModelContextProtocol --prerelease
+```
+
+**Step 2: Implement the MCP server**
+
+In the MCP server project, create a proper MCP server implementation:
+
+```cs
+using ModelContextProtocol.Server;
+using System.ComponentModel;
+
+// Move your Cart class here
+class Cart
+{
+    public int NumPairsOfSocks { get; set; }
+    // ... rest of Cart implementation
+}
+
+// Create a proper MCP server
+public class ECommerceMcpServer : McpServer
+{
+    private readonly Cart _cart = new();
+
+    [McpTool("get_price")]
+    [Description("Computes the price of socks, returning a value in dollars")]
+    public float GetPrice([Description("The number of pairs of socks to calculate price for")] int count)
+    {
+        return _cart.GetPrice(count);
+    }
+
+    [McpTool("add_to_cart")]
+    [Description("Adds the specified number of pairs of socks to the cart")]
+    public void AddSocksToCart([Description("The number of pairs to add")] int numPairs)
+    {
+        _cart.AddSocksToCart(numPairs);
+    }
+
+    [McpTool("get_cart_status")]
+    [Description("Gets the current cart contents")]
+    public object GetCartStatus()
+    {
+        return new
+        {
+            totalItems = _cart.NumPairsOfSocks,
+            totalPrice = _cart.GetPrice(_cart.NumPairsOfSocks),
+            currency = "USD"
+        };
+    }
+}
+
+// Program.cs for the MCP server
+public class Program
+{
+    public static async Task Main(string[] args)
+    {
+        var server = new ECommerceMcpServer();
+        await server.RunAsync(); // Runs on stdin/stdout
+    }
+}
+```
+
+**Step 3: Connect from your chat client**
+
+In your main chat application, connect to the external MCP server:
+
+```cs
+// Create an MCP client that connects to the external server
+IMcpClient mcpClient = await McpClientFactory.CreateAsync(
+    new StdioClientTransport(new()
+    {
+        Command = "dotnet",
+        Arguments = ["run", "--project", "path/to/ECommerceMcpServer"],
+        Name = "E-commerce MCP Server",
+    }));
+
+// Get tools from the MCP server
+IList<McpClientTool> tools = await mcpClient.ListToolsAsync();
+
+// Use the tools in your chat options
+var chatOptions = new ChatOptions 
+{ 
+    Tools = [.. tools] 
+};
+```
+
+**Benefits of external MCP servers:**
+- **Scalability**: Server can handle multiple AI clients simultaneously
+- **Security**: Process isolation and proper authentication
+- **Language Independence**: MCP servers can be written in any language
+- **Reusability**: Same server works with Claude, GPT, and other MCP-compatible systems
+
+### Benefits of MCP Over Direct Function Calling
+
+1. **Standardization**: MCP servers work with any MCP-compatible AI assistant
+2. **Rich Context**: Resources provide more context than just function parameters
+3. **Discovery**: Automatic capability discovery eliminates manual registration
+4. **Security**: Built-in authentication and authorization
+5. **Separation of Concerns**: Business logic separated from AI integration
+6. **Scalability**: MCP servers can run as separate processes or services
+
+### Migration Path from Function Calling to MCP
+
+The beauty of this approach is that you can gradually migrate from function calling to MCP:
+
+```cs
+// Phase 1: Traditional function calling (what you started with)
+var cart = new Cart();
+var getPriceTool = AIFunctionFactory.Create(cart.GetPrice);
+var addToCartTool = AIFunctionFactory.Create(cart.AddSocksToCart);
+var chatOptions = new ChatOptions { Tools = [getPriceTool, addToCartTool] };
+
+// Phase 2: MCP-structured but embedded (workshop approach)
+var cart = new Cart();
+var mcpServer = new ECommerceMcpServer(cart);
+var getPriceTool = AIFunctionFactory.Create(mcpServer.GetPrice);
+var addToCartTool = AIFunctionFactory.Create(mcpServer.AddSocksToCart);
+var chatOptions = new ChatOptions { Tools = [getPriceTool, addToCartTool] };
+
+// Phase 3: External MCP server (production approach)
+IMcpClient mcpClient = await McpClientFactory.CreateAsync(
+    new StdioClientTransport(new()
+    {
+        Command = "dotnet",
+        Arguments = ["run", "--project", "ECommerceMcpServer"],
+        Name = "E-commerce Server",
+    }));
+
+IList<McpClientTool> tools = await mcpClient.ListToolsAsync();
+var chatOptions = new ChatOptions { Tools = [.. tools] };
+```
+
+The user experience remains identical across all phases - the difference is in how the tools are structured and deployed. This gives you flexibility to start simple and evolve to more sophisticated architectures as needed.
+
 ### Troubles with small models
 
 If you're using GPT 3.5 or later, this code probably works great for you, and feels totally reliable. But on small 7-or-8-billion parameter models on Ollama, it may often:
@@ -282,11 +541,12 @@ One of the main design goals for `IChatClient` is to reuse standard implementati
 This is achieved by implementing those cross-cutting concerns as *middleware*. Built-in middleware currently includes:
 
  * Function invocation
+ * **MCP integration**
  * Logging
  * Open Telemetry
  * Caching
 
-Any middleware can freely be combined with other middleware and with any underlying AI service provider implementation. So, anyone building an `IChatClient` for a particular LLM backend doesn't need to implement their own version of function invocation, telemetry, etc.
+Any middleware can freely be combined with other middleware and with any underlying AI service provider implementation. So, anyone building an `IChatClient` for a particular LLM backend doesn't need to implement their own version of function invocation, MCP integration, telemetry, etc.
 
 You've already used two types of middleware earlier in this session: `UseLogging` and `UseFunctionInvocation`. Now let's take a look at how the middleware pipeline works and how you can implement custom pipeline steps.
 
@@ -297,6 +557,7 @@ When you register an `IChatClient` using code like this:
 ```cs
 hostBuilder.Services.AddChatClient(innerChatClient)
     .UseLogging()
+    .UseMcp(options => options.AddServer("ecommerce", mcpConfig))
     .UseFunctionInvocation()
     .UseOpenTelemetry();
 ```
@@ -310,10 +571,11 @@ hostBuilder.Services.AddSingleton(services =>
     var client0 = innerChatClient;
     var client1 = new OpenTelemetryChatClient(client0);
     var client2 = new FunctionInvokingChatClient(client1);
-    var client3 = new LoggingChatClient(client2, someILoggerInstanceFromDI);
+    var client3 = new McpChatClient(client2);
+    var client4 = new LoggingChatClient(client3, someILoggerInstanceFromDI);
 
     // Return the outer chat client
-    return client3;
+    return client4;
 });
 ```
 
@@ -380,6 +642,8 @@ hostBuilder.Services.AddChatClient(innerChatClient)
     .UseFunctionInvocation();
 ```
 
+> **Note:** When you migrate to external MCP servers, you would replace the embedded approach with MCP client connections, but the middleware pipeline structure remains the same.
+
 Now even if you talk to it in English, you should get back a reply in Welsh:
 
 ```
@@ -403,6 +667,8 @@ hostBuilder.Services.AddChatClient(innerChatClient)
     .UseRateLimit(TimeSpan.FromSeconds(5))
     .UseFunctionInvocation();
 ```
+
+> **Note:** For external MCP servers, you would add MCP client configuration before the function invocation middleware.
 
 ... and delays any incoming call so that users can't make more than one request every 5 seconds?
 
@@ -437,3 +703,36 @@ public static class UseRateLimitStep
 </details>
 
 And what if, instead of making users wait until the 5 seconds has elapsed, you wanted to bail out and return a message like `"Sorry, I'm too busy - please ask again later"`?
+
+## Looking Forward: MCP Adoption
+
+As you've seen in this workshop, while function calling provides immediate value, **Model Context Protocol represents the future of AI-tool integration**. Key benefits include:
+
+- **Standardization** across AI platforms
+- **Enhanced security** with built-in authentication
+- **Better developer experience** with automatic discovery
+- **Rich context sharing** beyond simple function parameters
+
+### Next Steps
+
+1. **Start with function calling** for rapid prototyping and learning
+2. **Evaluate MCP** for production applications requiring standardized integrations
+3. **Monitor the ecosystem** as more tools and platforms adopt MCP
+4. **Consider hybrid approaches** using both function calling and MCP as appropriate
+
+The middleware architecture demonstrated here makes it easy to migrate from function calling to MCP as your needs evolve, without requiring major application changes.
+
+## Additional Resources
+
+### MCP Documentation
+- [Model Context Protocol Specification](https://modelcontextprotocol.io/)
+- [MCP GitHub Repository](https://github.com/modelcontextprotocol)
+- [MCP Server Development Guide](https://modelcontextprotocol.io/docs/server)
+
+### Microsoft AI Resources
+- [Microsoft.Extensions.AI Documentation](https://docs.microsoft.com/dotnet/ai/)
+- [AI Integration Patterns](https://docs.microsoft.com/azure/ai-services/openai/how-to/function-calling)
+
+### Community
+- [MCP Server Registry](https://github.com/modelcontextprotocol/servers)
+- [AI Development Community](https://github.com/microsoft/ai-chat-protocol/discussions)
