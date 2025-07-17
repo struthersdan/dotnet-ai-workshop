@@ -44,7 +44,9 @@ For production use, you can use OpenAI or Azure OpenAI. Both of these are paid s
 
 ### Option 3: Ollama
 
-If you want to run everything locally on your own hardware, you can use **Ollama**. It's not as fast or accurate as the OpenAI services, unless you have a monster GPU, but is free. You will need a GPU otherwise it will be too slow. To do this:
+If you want to run everything locally on your own hardware, you can use **Ollama**. It's not as fast or accurate as the OpenAI services, unless you have a monster GPU, but is free. You will need a GPU otherwise it will be too slow. You can run ollama natively, or from a docker container
+
+### Running Ollama natively
 
    * Go to https://ollama.com/ and follow installation instructions
    * In a command prompt, make it fetch a model. This is a 4GiB file so may take a little time to download.
@@ -58,6 +60,28 @@ If you want to run everything locally on your own hardware, you can use **Ollama
      ```
      ollama serve
      ```
+
+#### Running Ollama from a container
+
+You can pull the ollama image with Docker on your local workstation with this command:
+
+```bash
+docker pull ollama/ollama
+```
+
+Then, start the ollama container with this command:
+
+```bash
+docker run -d --gpus=all -v ./ollama:/root/.ollama -p 11434:11434 --name ollama ollama/ollama
+```
+
+This command is going to create an ollama subfolder in the current folder to store model information.
+
+Next, let's run the `llama3.1` model by executing this command:
+
+```bash
+docker exec -it ollama ollama run llama3.1
+```
 
 ## Open and run the project
 
