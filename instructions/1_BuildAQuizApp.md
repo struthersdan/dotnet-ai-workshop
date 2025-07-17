@@ -15,7 +15,10 @@ You just need a GitHub account. To get an API key:
   * Be logged in to https://github.com/
   * Visit https://github.com/marketplace/models/azure-openai/gpt-4o/playground
   * In the top-right corner, click the green button labelled *Use this model*. Follow the instructions to **get a personal access token**. It's easiest if you get a **developer key** (i.e., use the *GitHub (Free)* option).
-  * When generating your developer key, don't give it any permissions or access to any of your private repositories. It doesn't need any of that.
+  * When generating your developer key, don't give it any permissions or access to any of your private repositories. It does need access to the **Models** permission on your account.  The Models permission can be found under 'Account Permissions'.  Assign the 'Read-only' access
+	  ![Account Permissions](img/1-GH-Permissions.png)
+		![Models Permission](img/1-GH-ModelsPermission.png)
+  * Click **Generate Token** to generate the token.
   * You'll get a key in the form `github_pat_........`. Copy this and store it somewhere temporarily. You'll need to use it soon.
 
 ### Option 2: OpenAI / Azure OpenAI
@@ -61,11 +64,11 @@ If you want to run everything locally on your own hardware, you can use **Ollama
 If you haven't already done so, clone this repo:
 
 ```
-git clone https://github.com/SteveSandersonMS/dotnet-ai-workshop.git
+git clone https://github.com/csharpfritz/dotnet-ai-workshop
 cd dotnet-ai-workshop
 ```
 
-Now open and run the project `exercises/QuizApp/Begin`.
+Now open and run the project `exercises/1. QuizApp/Begin`.
 
  * If you're using Visual Studio, open the `.sln` file in that directory
  * If you're using VS Code, run `code exercises/QuizApp/Begin`

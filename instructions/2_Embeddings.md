@@ -6,7 +6,9 @@ An embedding model converts some input - usually text or an image - into a numer
 
 ## Get your embedding model ready
 
-For this exercise we'll use Ollama, so make sure you have it installed. Embedding models can be small, and can run quickly even on CPU on any laptop.
+For this exercise we'll use Ollama, and you can run it natively or with Docker. Embedding models can be small, and can run quickly even on CPU on any laptop.
+
+### Option 1: Running Ollama natively
 
 Pull the the [all-minilm](https://ollama.com/library/all-minilm) embedding model, which is pretty small and general-purpose:
 
@@ -22,9 +24,31 @@ ollama serve
 
 If you get an error like *Error: listen tcp 127.0.0.1:11434: Only one usage of each socket address ... is normally permitted* that just means it's already running. Check your system tray or task bar and quit the existing instance before `ollama serve`.
 
+### Option 2: Running Ollama in Docker
+
+You can pull the ollama image with Docker on your local workstation with this command:
+
+```bash
+docker pull ollama/ollama
+```
+
+Then, start the ollama container with this command:
+
+```bash
+docker run -d --gpus=all -v ./ollama:/root/.ollama -p 11434:11434 --name ollama ollama/ollama
+```
+
+This command is going to create an ollama subfolder in the current folder to store model information.
+
+Next, let's run the `all-minilm` model by executing this command:
+
+```bash
+docker exec -it ollama ollama run all-minilm
+```
+
 ## Open the project
 
-Open the project `exercises/Embeddings/Begin`.
+Open the project `exercises/2. Embeddings/Begin`.
 
 In `Program.cs`, notice that there are three different entry points:
 
