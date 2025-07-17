@@ -8,7 +8,7 @@ This session is **part one of two** about language models. In the [second part](
 
 *Prerequisites: These instructions assume you've done earlier sessions, in particular [session 1](1_BuildAQuizApp.md), which gives the basic environment setup steps.*
 
-Start by opening the project `exercises/Chat/Begin`. Near the top, find the variable `innerChatClient` and update its value according to the LLM service you wish to use.
+Start by opening the project `exercises/4. Chat/Begin`. Near the top, find the variable `innerChatClient` and update its value according to the LLM service you wish to use.
 
 * For GitHub Models or Azure OpenAI, you should have code like this:
 
