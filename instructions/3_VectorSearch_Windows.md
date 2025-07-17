@@ -149,21 +149,3 @@ var index = await LoadOrCreateIndexAsync("index_hnsw.bin", githubIssues);
 You should find it takes slightly longer to build the HNSW index, but once it's done, searching is too fast to measure. It shows as `0.00ms` for me (except the first search).
 
 HNSW stands for "Hierarchical Navigable Small Worlds" and refers to a vector indexing technique first developed in 2011. It's far too complicated to explain here, but [here's a good explanation including a video](https://www.pinecone.io/learn/series/faiss/hnsw/).
-
-## Advanced/optional: Optimize your embeddings and index
-
-There are *many* different ways to represent embeddings and to index them. FAISS is extremely flexible and advanced. See [FAISS index capabilties](https://github.com/facebookresearch/faiss/wiki/Faiss-indexes) and [this hilariously complicated flowchart](https://github.com/facebookresearch/faiss/wiki/Guidelines-to-choose-an-index).
-
-One in particular you might like to try is called *Locality Sensitive Hashing*, or LSH. This is a different way to represent an embedding, where instead of a `float` for each component, there's just a single bit indicating whether the float value was positive - that's 32x smaller! It sounds like you're throwing away most of the information, and you are, but amazingly the quality of search results isn't badly affected in many common cases.
-
-To use this in FAISS, change your index definition:
-
-```cs
-var index = FaissNet.Index.Create(EmbeddingDimension, "IDMap2,LSH", FaissNet.MetricType.METRIC_L2);
-```
-
-Also remember to update the filename you're passing in, e.g., to `"index_lsh.bin"`.
-
-Note that it only makes sense to use with an L2 metric, not cosine similarity, because this is no longer a direction - it's just a set of bits. In this special case, the L2 metric effectively just calculates what proportion of bits are equal across the two vectors, so it's a value from 0 to 1.
-
-If you check the size of `index_lsh.bin` on disk, it will be around 32x smaller than the other indexes you persisted before. What do you think about the quality and/or speed of the search results - are they as good?
