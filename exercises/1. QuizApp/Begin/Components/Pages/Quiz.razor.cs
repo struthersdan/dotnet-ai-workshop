@@ -51,7 +51,7 @@ public partial class Quiz(IChatClient chatClient) : ComponentBase
     """;
         var response = await chatClient.GetResponseAsync(prompt);
         currentQuestionText = response.Text;
-        
+
 
         previousQuestions += currentQuestionText;
     }
@@ -89,9 +89,25 @@ public partial class Quiz(IChatClient chatClient) : ComponentBase
             Examples: CORRECT: And did you know, Jupiter is made of gas?
                     INCORRECT: The Riemann hypothesis is still unsolved.
             """;
-        var response = await chatClient.GetResponseAsync(prompt);
+        var response = await chatClient.GetResponseAsync<MarkingResult>(prompt);
+        if (response.TryGetResult(out var result))
+        {
+            Console.WriteLine(response);
+            if (result.IsCorrect)
+            {
+                pointsScored++;
+                currentQuestionOutcome = $"Well done! {result.Explanation}";
+            }
+            else
+            {
+                currentQuestionOutcome = $"Sorry, that's wrong. {result.Explanation}";
+            }
+        }
+        else
+        {
+            currentQuestionOutcome = "ERROR";
+        }
 
-        currentQuestionOutcome = response.Text;
 
         // There's a better way to do this using structured output. We'll get to that later.
         if (currentQuestionOutcome.StartsWith("CORRECT"))
@@ -102,4 +118,6 @@ public partial class Quiz(IChatClient chatClient) : ComponentBase
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
         => await answerInput.FocusAsync();
+    private record MarkingResult(bool IsCorrect, string Explanation);
 }
+
