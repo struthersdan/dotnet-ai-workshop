@@ -8,7 +8,9 @@ The main capabilities you'll learn about are *function calling*, *Model Context 
 
 While this workshop demonstrates traditional function calling (also known as tool calling), the industry is rapidly moving toward standardized protocols like **Model Context Protocol (MCP)**. MCP provides a unified way for AI assistants to interact with external systems, making integrations more standardized and reusable across different AI platforms.
 
-> **Note:** MCP is a standardized protocol developed by Anthropic and adopted by the broader AI community. It enables AI assistants to securely connect to data sources, tools, and services in a consistent manner.
+> **Note:** MCP is a standardized protocol developed by Anthropic and adopted by the broader AI community. It enables AI assistants to securely connect to data sources, tools, and services in a consistent manner. Learn more at [modelcontextprotocol.io](https://modelcontextprotocol.io/) and explore the [official documentation](https://spec.modelcontextprotocol.io/).
+
+The official [C# SDK for Model Context Protocol](https://github.com/modelcontextprotocol/csharp-sdk) is available on GitHub and [NuGet](https://www.nuget.org/packages/ModelContextProtocol).
 
 ## Project setup
 
@@ -325,7 +327,7 @@ public class ECommerceMcpServer
 }
 ```
 
-### Using MCP in Your Workshop - Embedded Approach
+### Using MCP - Embedded Approach
 
 For this workshop, we'll use MCP in "embedded" mode where the MCP server runs in the same process as your chat client. This is simpler for learning purposes.
 
@@ -557,7 +559,6 @@ When you register an `IChatClient` using code like this:
 ```cs
 hostBuilder.Services.AddChatClient(innerChatClient)
     .UseLogging()
-    .UseMcp(options => options.AddServer("ecommerce", mcpConfig))
     .UseFunctionInvocation()
     .UseOpenTelemetry();
 ```
@@ -571,11 +572,10 @@ hostBuilder.Services.AddSingleton(services =>
     var client0 = innerChatClient;
     var client1 = new OpenTelemetryChatClient(client0);
     var client2 = new FunctionInvokingChatClient(client1);
-    var client3 = new McpChatClient(client2);
-    var client4 = new LoggingChatClient(client3, someILoggerInstanceFromDI);
+    var client3 = new LoggingChatClient(client3, someILoggerInstanceFromDI);
 
     // Return the outer chat client
-    return client4;
+    return client3;
 });
 ```
 
@@ -668,9 +668,9 @@ hostBuilder.Services.AddChatClient(innerChatClient)
     .UseFunctionInvocation();
 ```
 
-> **Note:** For external MCP servers, you would add MCP client configuration before the function invocation middleware.
-
 ... and delays any incoming call so that users can't make more than one request every 5 seconds?
+
+> **Note:** For external MCP servers, you would add MCP client configuration before the function invocation middleware.
 
 > [!TIP]
 > Start by adding a package reference to `System.Threading.RateLimiting`.
