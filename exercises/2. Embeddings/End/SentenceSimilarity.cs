@@ -13,7 +13,7 @@ public class SentenceSimilarity
             new OllamaEmbeddingGenerator(new Uri("http://127.0.0.1:11434"), modelId: "all-minilm");
 
         // 1: Just generate an embedding
-        var embedding = await embeddingGenerator.GenerateEmbeddingVectorAsync("Hello, world!");
+        var embedding = await embeddingGenerator.GenerateVectorAsync("Hello, world!");
         Console.WriteLine($"Embedding dimensions: {embedding.Span.Length}");
         foreach (var value in embedding.Span)
         {
@@ -21,9 +21,9 @@ public class SentenceSimilarity
         }
 
         // 2: Compute and compare embeddings
-        var catVector = await embeddingGenerator.GenerateEmbeddingVectorAsync("cat");
-        var dogVector = await embeddingGenerator.GenerateEmbeddingVectorAsync("dog");
-        var kittenVector = await embeddingGenerator.GenerateEmbeddingVectorAsync("kitten");
+        var catVector = await embeddingGenerator.GenerateVectorAsync("cat");
+        var dogVector = await embeddingGenerator.GenerateVectorAsync("dog");
+        var kittenVector = await embeddingGenerator.GenerateVectorAsync("kitten");
 
         Console.WriteLine($"Cat-dog similarity: {TensorPrimitives.CosineSimilarity(catVector.Span, dogVector.Span):F2}");
         Console.WriteLine($"Cat-kitten similarity: {TensorPrimitives.CosineSimilarity(catVector.Span, kittenVector.Span):F2}");

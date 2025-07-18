@@ -20,7 +20,7 @@ public class ManualSemanticSearch
             var input = Console.ReadLine()!;
             if (input == "") break;
 
-            var inputEmbedding = await embeddingGenerator.GenerateEmbeddingVectorAsync(input);
+            var inputEmbedding = await embeddingGenerator.GenerateVectorAsync(input);
 
             var closest =
                 from candidate in titlesWithEmbeddings

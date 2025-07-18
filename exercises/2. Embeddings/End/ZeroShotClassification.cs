@@ -42,7 +42,7 @@ public class ZeroShotClassification : IDisposable
         // using a proper zero-shot classification model. Secondly, the candidate embeddings
         // could be precomputed, not recomputed for each call. Thirdly they could be indexed
         // for faster nearest-neighbour search.
-        var inputEmbedding = await embeddingGenerator.GenerateEmbeddingVectorAsync(text);
+        var inputEmbedding = await embeddingGenerator.GenerateVectorAsync(text);
         var candidatesWithEmbeddings = await embeddingGenerator.GenerateAndZipAsync(candidateLabels);
 
         return (from candidate in candidatesWithEmbeddings
