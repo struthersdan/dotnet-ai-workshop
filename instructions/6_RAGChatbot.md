@@ -18,7 +18,7 @@ In this exercise you'll build an end-to-end system handling all of this.
 
 To start:
 
- * Open the project `exercises/RetrievalAugmentedGeneration/Begin`
+ * Open the project `exercises/6. RetrievalAugmentedGeneration/Begin`
  * If you're using VS, ensure that `Ingestion` is marked as the startup project. For non-VS users, `Ingestion` is the project you should be ready to `dotnet run`.
  * Open `Program.cs`. Follow the instructions at the top, which explain how to:
    * Make sure Ollama is running and has the `all-minilm` model available
