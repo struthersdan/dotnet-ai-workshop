@@ -24,6 +24,7 @@
     <PackageVersion Include="Qdrant.Client" Version="1.13.0" />
     <PackageVersion Include="SmartComponents.LocalEmbeddings" Version="0.1.0-preview10148" />
     <PackageVersion Include="System.Numerics.Tensors" Version="9.0.1" />
+    <PackageVersion Include="System.Threading.RateLimiting" Version="9.0.7" />
     <PackageVersion Include="xunit" Version="2.9.3" />
     <PackageVersion Include="xunit.runner.visualstudio" Version="3.0.2" />
   </ItemGroup>
